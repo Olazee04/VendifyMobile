@@ -1,14 +1,20 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, RefreshControl,
-  Dimensions, Alert,
-} from 'react-native';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../api/api';
+  Alert,
+  Dimensions,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import api from "../../api/api";
+import { useAuth } from "../../context/AuthContext";
 
-const { width } = Dimensions.get('window');
-const PURPLE = '#7c3aed';
+const { width } = Dimensions.get("window");
+const PURPLE = "#7c3aed";
 
 interface DashboardData {
   totalRevenue: number;
@@ -35,22 +41,19 @@ interface DashboardData {
   }>;
 }
 
-export default function DashboardScreen({
-  navigation
-}: any) {
+export default function DashboardScreen({ navigation }: any) {
   const { user, logout } = useAuth();
-  const [data, setData] = useState<DashboardData | null>(
-    null
-  );
+  const insets = useSafeAreaInsets();
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchDashboard = async () => {
     try {
-      const res = await api.get('/analytics/dashboard');
+      const res = await api.get("/analytics/dashboard");
       setData(res.data.data);
     } catch (error) {
-      console.error('Dashboard error:', error);
+      console.error("Dashboard error:", error);
     } finally {
       setLoading(false);
     }
@@ -70,38 +73,32 @@ export default function DashboardScreen({
   }, []);
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: logout,
-        },
-      ]
-    );
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: logout,
+      },
+    ]);
   };
 
   const statusColor = (status: string) => {
     const colors: Record<string, string> = {
-      Pending: '#f59e0b',
-      Confirmed: '#3b82f6',
-      Processing: '#8b5cf6',
-      Shipped: '#6366f1',
-      Delivered: '#10b981',
-      Cancelled: '#ef4444',
+      Pending: "#f59e0b",
+      Confirmed: "#3b82f6",
+      Processing: "#8b5cf6",
+      Shipped: "#6366f1",
+      Delivered: "#10b981",
+      Cancelled: "#ef4444",
     };
-    return colors[status] ?? '#6b7280';
+    return colors[status] ?? "#6b7280";
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>
-          Loading dashboard...
-        </Text>
+        <Text style={styles.loadingText}>Loading dashboard...</Text>
       </View>
     );
   }
@@ -117,21 +114,17 @@ export default function DashboardScreen({
           tintColor={PURPLE}
         />
       }
-      showsVerticalScrollIndicator={false}>
-
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View>
-          <Text style={styles.greeting}>
-            Hi, {user?.firstName}! 👋
-          </Text>
+          <Text style={styles.greeting}>Hi, {user?.firstName}! 👋</Text>
           <Text style={styles.subGreeting}>
             Here&apos;s your store overview
           </Text>
         </View>
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={styles.logoutBtn}>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -140,12 +133,12 @@ export default function DashboardScreen({
       {(data?.pendingOrders ?? 0) > 0 && (
         <TouchableOpacity
           style={styles.alert}
-          onPress={() => navigation.navigate('Orders')}>
+          onPress={() => navigation.navigate("Orders")}
+        >
           <Text style={styles.alertEmoji}>🔔</Text>
           <Text style={styles.alertText}>
             {data?.pendingOrders} new order
-            {(data?.pendingOrders ?? 0) > 1
-              ? 's need' : ' needs'} attention!
+            {(data?.pendingOrders ?? 0) > 1 ? "s need" : " needs"} attention!
           </Text>
           <Text style={styles.alertArrow}>→</Text>
         </TouchableOpacity>
@@ -155,12 +148,9 @@ export default function DashboardScreen({
       {(data?.lowStockProducts ?? 0) > 0 && (
         <TouchableOpacity style={styles.alertWarning}>
           <Text style={styles.alertEmoji}>⚠️</Text>
-          <Text style={[
-            styles.alertText, { color: '#92400e' }
-          ]}>
+          <Text style={[styles.alertText, { color: "#92400e" }]}>
             {data?.lowStockProducts} product
-            {(data?.lowStockProducts ?? 0) > 1
-              ? 's are' : ' is'} low on stock
+            {(data?.lowStockProducts ?? 0) > 1 ? "s are" : " is"} low on stock
           </Text>
         </TouchableOpacity>
       )}
@@ -169,10 +159,8 @@ export default function DashboardScreen({
       <View style={styles.statsGrid}>
         <StatCard
           label="Total Revenue"
-          value={`₦${(data?.totalRevenue ?? 0)
-            .toLocaleString()}`}
-          sub={`₦${(data?.revenueThisMonth ?? 0)
-            .toLocaleString()} this month`}
+          value={`₦${(data?.totalRevenue ?? 0).toLocaleString()}`}
+          sub={`₦${(data?.revenueThisMonth ?? 0).toLocaleString()} this month`}
           emoji="💰"
           color="#7c3aed"
           bg="#f5f3ff"
@@ -205,50 +193,41 @@ export default function DashboardScreen({
 
       {/* Quick Actions */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          Quick Actions
-        </Text>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionsGrid}>
           {[
             {
-              emoji: '➕',
-              label: 'Add Product',
-              onPress: () =>
-                navigation.navigate('AddProduct'),
-              color: '#f5f3ff',
+              emoji: "➕",
+              label: "Add Product",
+              onPress: () => navigation.navigate("AddProduct"),
+              color: "#f5f3ff",
             },
             {
-              emoji: '📋',
-              label: 'View Orders',
-              onPress: () => navigation.navigate('Orders'),
-              color: '#eff6ff',
+              emoji: "📋",
+              label: "View Orders",
+              onPress: () => navigation.navigate("Orders"),
+              color: "#eff6ff",
             },
             {
-              emoji: '🏪',
-              label: 'My Store',
-              onPress: () => navigation.navigate('Store'),
-              color: '#ecfdf5',
+              emoji: "🏪",
+              label: "My Store",
+              onPress: () => navigation.navigate("Store"),
+              color: "#ecfdf5",
             },
             {
-              emoji: '🔔',
-              label: 'Alerts',
-              onPress: () => navigation.navigate('Alerts'),
-              color: '#fef3c7',
+              emoji: "🔔",
+              label: "Alerts",
+              onPress: () => navigation.navigate("Alerts"),
+              color: "#fef3c7",
             },
           ].map((action) => (
             <TouchableOpacity
               key={action.label}
-              style={[
-                styles.actionBtn,
-                { backgroundColor: action.color }
-              ]}
-              onPress={action.onPress}>
-              <Text style={styles.actionEmoji}>
-                {action.emoji}
-              </Text>
-              <Text style={styles.actionLabel}>
-                {action.label}
-              </Text>
+              style={[styles.actionBtn, { backgroundColor: action.color }]}
+              onPress={action.onPress}
+            >
+              <Text style={styles.actionEmoji}>{action.emoji}</Text>
+              <Text style={styles.actionLabel}>{action.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -257,11 +236,8 @@ export default function DashboardScreen({
       {/* Recent Orders */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Recent Orders
-          </Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Orders')}>
+          <Text style={styles.sectionTitle}>Recent Orders</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Orders")}>
             <Text style={styles.seeAll}>See all →</Text>
           </TouchableOpacity>
         </View>
@@ -269,9 +245,7 @@ export default function DashboardScreen({
         {(data?.recentOrders ?? []).length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🛒</Text>
-            <Text style={styles.emptyText}>
-              No orders yet
-            </Text>
+            <Text style={styles.emptyText}>No orders yet</Text>
             <Text style={styles.emptySubtext}>
               Share your store to get orders
             </Text>
@@ -281,32 +255,32 @@ export default function DashboardScreen({
             <TouchableOpacity
               key={order.id}
               style={styles.orderRow}
-              onPress={() => navigation.navigate(
-                'OrderDetail', { orderId: order.id }
-              )}>
+              onPress={() =>
+                navigation.navigate("OrderDetail", { orderId: order.id })
+              }
+            >
               <View style={styles.orderLeft}>
-                <Text style={styles.orderNumber}>
-                  {order.orderNumber}
-                </Text>
-                <Text style={styles.orderCustomer}>
-                  {order.customerName}
-                </Text>
+                <Text style={styles.orderNumber}>{order.orderNumber}</Text>
+                <Text style={styles.orderCustomer}>{order.customerName}</Text>
               </View>
               <View style={styles.orderRight}>
                 <Text style={styles.orderTotal}>
                   ₦{order.total.toLocaleString()}
                 </Text>
-                <View style={[
-                  styles.statusBadge,
-                  {
-                    backgroundColor:
-                      `${statusColor(order.status)}20`
-                  }
-                ]}>
-                  <Text style={[
-                    styles.statusText,
-                    { color: statusColor(order.status) }
-                  ]}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      backgroundColor: `${statusColor(order.status)}20`,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: statusColor(order.status) },
+                    ]}
+                  >
                     {order.status}
                   </Text>
                 </View>
@@ -318,25 +292,18 @@ export default function DashboardScreen({
 
       {/* Top Products */}
       <View style={[styles.section, { marginBottom: 100 }]}>
-        <Text style={styles.sectionTitle}>
-          Top Products
-        </Text>
+        <Text style={styles.sectionTitle}>Top Products</Text>
         {(data?.topProducts ?? []).length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📦</Text>
-            <Text style={styles.emptyText}>
-              No sales yet
-            </Text>
+            <Text style={styles.emptyText}>No sales yet</Text>
           </View>
         ) : (
           data?.topProducts.map((product, index) => (
             <View key={product.id} style={styles.productRow}>
-              <Text style={styles.productRank}>
-                #{index + 1}
-              </Text>
+              <Text style={styles.productRank}>#{index + 1}</Text>
               <View style={styles.productInfo}>
-                <Text style={styles.productName}
-                  numberOfLines={1}>
+                <Text style={styles.productName} numberOfLines={1}>
                   {product.name}
                 </Text>
                 <Text style={styles.productSales}>
@@ -356,7 +323,12 @@ export default function DashboardScreen({
 
 // StatCard Component
 const StatCard = ({
-  label, value, sub, emoji, color, bg
+  label,
+  value,
+  sub,
+  emoji,
+  color,
+  bg,
 }: {
   label: string;
   value: any;
@@ -367,9 +339,7 @@ const StatCard = ({
 }) => (
   <View style={[styles.statCard, { backgroundColor: bg }]}>
     <Text style={styles.statEmoji}>{emoji}</Text>
-    <Text style={[styles.statValue, { color }]}>
-      {value}
-    </Text>
+    <Text style={[styles.statValue, { color }]}>{value}</Text>
     <Text style={styles.statLabel}>{label}</Text>
     <Text style={styles.statSub}>{sub}</Text>
   </View>
@@ -378,71 +348,71 @@ const StatCard = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f9fafb",
   },
   loadingText: {
     color: PURPLE,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 16,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: "#f3f4f6",
   },
   greeting: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
   },
   subGreeting: {
     fontSize: 13,
-    color: '#6b7280',
+    color: "#6b7280",
     marginTop: 2,
   },
   logoutBtn: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#fef2f2',
+    backgroundColor: "#fef2f2",
     borderRadius: 10,
   },
   logoutText: {
-    color: '#ef4444',
-    fontWeight: '600',
+    color: "#ef4444",
+    fontWeight: "600",
     fontSize: 13,
   },
   alert: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ede9fe',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ede9fe",
     marginHorizontal: 16,
     marginTop: 12,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#ddd6fe',
+    borderColor: "#ddd6fe",
   },
   alertWarning: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fef3c7',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fef3c7",
     marginHorizontal: 16,
     marginTop: 8,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#fde68a',
+    borderColor: "#fde68a",
   },
   alertEmoji: {
     fontSize: 18,
@@ -451,17 +421,17 @@ const styles = StyleSheet.create({
   alertText: {
     flex: 1,
     fontSize: 13,
-    fontWeight: '600',
-    color: '#4c1d95',
+    fontWeight: "600",
+    color: "#4c1d95",
   },
   alertArrow: {
     color: PURPLE,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 16,
   },
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     padding: 12,
     gap: 8,
     paddingTop: 16,
@@ -477,17 +447,17 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: "600",
+    color: "#374151",
   },
   statSub: {
     fontSize: 11,
-    color: '#9ca3af',
+    color: "#9ca3af",
     marginTop: 2,
   },
   section: {
@@ -496,32 +466,32 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
     marginBottom: 12,
   },
   seeAll: {
     color: PURPLE,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 13,
   },
   actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
   },
   actionBtn: {
     width: (width - 52) / 2,
     borderRadius: 14,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   actionEmoji: {
     fontSize: 28,
@@ -529,39 +499,39 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#374151',
+    fontWeight: "700",
+    color: "#374151",
   },
   orderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: "#f3f4f6",
   },
   orderLeft: {
     flex: 1,
   },
   orderNumber: {
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
     fontSize: 14,
   },
   orderCustomer: {
-    color: '#6b7280',
+    color: "#6b7280",
     fontSize: 12,
     marginTop: 2,
   },
   orderRight: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   orderTotal: {
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
     fontSize: 14,
   },
   statusBadge: {
@@ -572,46 +542,46 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   productRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: "#f3f4f6",
   },
   productRank: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#d1d5db',
+    fontWeight: "800",
+    color: "#d1d5db",
     width: 32,
   },
   productInfo: {
     flex: 1,
   },
   productName: {
-    fontWeight: '600',
-    color: '#111827',
+    fontWeight: "600",
+    color: "#111827",
     fontSize: 14,
   },
   productSales: {
-    color: '#6b7280',
+    color: "#6b7280",
     fontSize: 12,
     marginTop: 2,
   },
   productRevenue: {
-    fontWeight: '800',
+    fontWeight: "800",
     color: PURPLE,
     fontSize: 14,
   },
   emptyState: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 32,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 16,
   },
   emptyEmoji: {
@@ -619,12 +589,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emptyText: {
-    fontWeight: '700',
-    color: '#374151',
+    fontWeight: "700",
+    color: "#374151",
     fontSize: 16,
   },
   emptySubtext: {
-    color: '#9ca3af',
+    color: "#9ca3af",
     fontSize: 13,
     marginTop: 4,
   },

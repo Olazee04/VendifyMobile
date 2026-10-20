@@ -3,7 +3,7 @@ import React, {
   useEffect, ReactNode
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../api/api";
+import api, { setUnauthorizedHandler } from "../api/api";
 
 interface User {
   id: string;
@@ -32,6 +32,7 @@ interface RegisterData {
   password: string;
   phoneNumber?: string;
 }
+
 
 const AuthContext = createContext<AuthContextType>(
   {} as AuthContextType
@@ -115,11 +116,20 @@ export function AuthProvider({
     setUser(null);
   };
 
-  const refreshUser = async () => {
+   const refreshUser = async () => {
     const stored = await AsyncStorage
       .getItem("vendify_user");
     if (stored) setUser(JSON.parse(stored));
   };
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setToken(null);
+      setUser(null);
+      delete api.defaults.headers.common["Authorization"];
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   return (
     <AuthContext.Provider value={{

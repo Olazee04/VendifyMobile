@@ -1,7 +1,12 @@
-﻿import React, { useEffect, useRef } from "react";
+﻿import { StatusBar } from "expo-status-bar";
+import { useEffect, useRef } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "./src/context/AuthContext";
 import AppNavigator from "./src/navigation/AppNavigator";
-import { registerForPushNotifications, startOrderPolling } from "./src/utils/notifications";
+import {
+  registerForPushNotifications,
+  startOrderPolling,
+} from "./src/utils/notifications";
 
 export default function App() {
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -17,8 +22,11 @@ export default function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <AppNavigator />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <StatusBar style="dark" />
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

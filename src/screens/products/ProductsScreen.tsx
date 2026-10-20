@@ -1,15 +1,21 @@
-import React, {
-  useEffect, useState, useCallback
-} from 'react';
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useState } from "react";
 import {
-  View, Text, StyleSheet, FlatList,
-  TouchableOpacity, RefreshControl,
-  TextInput, Alert, Image, Switch,
-} from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import api from '../../api/api';
+  Alert,
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import api from "../../api/api";
 
-const PURPLE = '#7c3aed';
+const PURPLE = "#7c3aed";
 
 interface Product {
   id: string;
@@ -24,21 +30,20 @@ interface Product {
   categoryName?: string;
 }
 
-export default function ProductsScreen({
-  navigation
-}: any) {
+export default function ProductsScreen({ navigation }: any) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+  const insets = useSafeAreaInsets();
 
   const fetchProducts = async () => {
     try {
-      const res = await api.get('/products/my-products');
+      const res = await api.get("/products/my-products");
       setProducts(res.data.data?.products ?? []);
     } catch {
-      Alert.alert('Error', 'Failed to load products');
+      Alert.alert("Error", "Failed to load products");
     } finally {
       setLoading(false);
     }
@@ -48,7 +53,7 @@ export default function ProductsScreen({
   useFocusEffect(
     useCallback(() => {
       fetchProducts();
-    }, [])
+    }, []),
   );
 
   const onRefresh = useCallback(async () => {
@@ -57,67 +62,51 @@ export default function ProductsScreen({
     setRefreshing(false);
   }, []);
 
-  const togglePublish = async (
-    product: Product
-  ) => {
+  const togglePublish = async (product: Product) => {
     try {
-      await api.put(
-        `/products/${product.id}/toggle-publish`
+      await api.put(`/products/${product.id}/toggle-publish`);
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === product.id ? { ...p, isPublished: !p.isPublished } : p,
+        ),
       );
-      setProducts(prev => prev.map(p =>
-        p.id === product.id
-          ? { ...p, isPublished: !p.isPublished }
-          : p
-      ));
     } catch {
-      Alert.alert('Error', 'Failed to update product');
+      Alert.alert("Error", "Failed to update product");
     }
   };
 
   const deleteProduct = (product: Product) => {
     Alert.alert(
-      'Delete Product',
+      "Delete Product",
       `Delete "${product.name}"? This cannot be undone.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: async () => {
             try {
-              await api.delete(
-                `/products/${product.id}`
-              );
-              setProducts(prev =>
-                prev.filter(p => p.id !== product.id)
-              );
+              await api.delete(`/products/${product.id}`);
+              setProducts((prev) => prev.filter((p) => p.id !== product.id));
             } catch {
-              Alert.alert(
-                'Error', 'Failed to delete product'
-              );
+              Alert.alert("Error", "Failed to delete product");
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
 
-  const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase()
-      .includes(search.toLowerCase());
-    if (filter === 'published')
-      return matchSearch && p.isPublished;
-    if (filter === 'draft')
-      return matchSearch && !p.isPublished;
-    if (filter === 'low')
-      return matchSearch &&
-        p.trackInventory && p.stockQuantity <= 5;
+  const filtered = products.filter((p) => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    if (filter === "published") return matchSearch && p.isPublished;
+    if (filter === "draft") return matchSearch && !p.isPublished;
+    if (filter === "low")
+      return matchSearch && p.trackInventory && p.stockQuantity <= 5;
     return matchSearch;
   });
 
-  const renderProduct = ({
-    item
-  }: { item: Product }) => (
+  const renderProduct = ({ item }: { item: Product }) => (
     <View style={styles.productCard}>
       <View style={styles.productContent}>
         {/* Image */}
@@ -134,8 +123,7 @@ export default function ProductsScreen({
 
         {/* Info */}
         <View style={styles.productInfo}>
-          <Text style={styles.productName}
-            numberOfLines={2}>
+          <Text style={styles.productName} numberOfLines={2}>
             {item.name}
           </Text>
           <View style={styles.priceRow}>
@@ -149,22 +137,17 @@ export default function ProductsScreen({
             )}
           </View>
           <View style={styles.metaRow}>
-            <Text style={styles.metaText}>
-              {item.stockQuantity} in stock
-            </Text>
+            <Text style={styles.metaText}>{item.stockQuantity} in stock</Text>
             <Text style={styles.metaDot}>·</Text>
-            <Text style={styles.metaText}>
-              {item.salesCount} sold
-            </Text>
+            <Text style={styles.metaText}>{item.salesCount} sold</Text>
           </View>
 
           {/* Stock warning */}
-          {item.trackInventory &&
-            item.stockQuantity <= 5 && (
+          {item.trackInventory && item.stockQuantity <= 5 && (
             <View style={styles.stockWarn}>
               <Text style={styles.stockWarnText}>
                 {item.stockQuantity === 0
-                  ? '❌ Out of stock'
+                  ? "❌ Out of stock"
                   : `⚠️ Only ${item.stockQuantity} left`}
               </Text>
             </View>
@@ -176,7 +159,8 @@ export default function ProductsScreen({
           value={item.isPublished}
           onValueChange={() => togglePublish(item)}
           trackColor={{
-            false: '#e5e7eb', true: PURPLE
+            false: "#e5e7eb",
+            true: PURPLE,
           }}
           thumbColor="white"
           style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
@@ -187,19 +171,17 @@ export default function ProductsScreen({
       <View style={styles.productActions}>
         <TouchableOpacity
           style={styles.editBtn}
-          onPress={() => navigation.navigate(
-            'EditProduct', { productId: item.id }
-          )}>
-          <Text style={styles.editBtnText}>
-            ✏️ Edit
-          </Text>
+          onPress={() =>
+            navigation.navigate("EditProduct", { productId: item.id })
+          }
+        >
+          <Text style={styles.editBtnText}>✏️ Edit</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.deleteBtn}
-          onPress={() => deleteProduct(item)}>
-          <Text style={styles.deleteBtnText}>
-            🗑️ Delete
-          </Text>
+          onPress={() => deleteProduct(item)}
+        >
+          <Text style={styles.deleteBtnText}>🗑️ Delete</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -207,9 +189,8 @@ export default function ProductsScreen({
 
   return (
     <View style={styles.container}>
-
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TextInput
           style={styles.searchInput}
           value={search}
@@ -219,9 +200,8 @@ export default function ProductsScreen({
         />
         <TouchableOpacity
           style={styles.addBtn}
-          onPress={() =>
-            navigation.navigate('AddProduct')
-          }>
+          onPress={() => navigation.navigate("AddProduct")}
+        >
           <Text style={styles.addBtnText}>+ Add</Text>
         </TouchableOpacity>
       </View>
@@ -229,22 +209,25 @@ export default function ProductsScreen({
       {/* Filters */}
       <View style={styles.filterRow}>
         {[
-          { key: 'all', label: 'All' },
-          { key: 'published', label: '🟢 Live' },
-          { key: 'draft', label: '⚫ Draft' },
-          { key: 'low', label: '⚠️ Low Stock' },
-        ].map(f => (
+          { key: "all", label: "All" },
+          { key: "published", label: "🟢 Live" },
+          { key: "draft", label: "⚫ Draft" },
+          { key: "low", label: "⚠️ Low Stock" },
+        ].map((f) => (
           <TouchableOpacity
             key={f.key}
             style={[
               styles.filterBtn,
-              filter === f.key && styles.filterBtnActive
+              filter === f.key && styles.filterBtnActive,
             ]}
-            onPress={() => setFilter(f.key)}>
-            <Text style={[
-              styles.filterText,
-              filter === f.key && styles.filterTextActive
-            ]}>
+            onPress={() => setFilter(f.key)}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                filter === f.key && styles.filterTextActive,
+              ]}
+            >
               {f.label}
             </Text>
           </TouchableOpacity>
@@ -254,12 +237,12 @@ export default function ProductsScreen({
       {/* Count */}
       <Text style={styles.count}>
         {filtered.length} product
-        {filtered.length !== 1 ? 's' : ''}
+        {filtered.length !== 1 ? "s" : ""}
       </Text>
 
       <FlatList
         data={filtered}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={renderProduct}
         refreshControl={
           <RefreshControl
@@ -275,21 +258,17 @@ export default function ProductsScreen({
             <Text style={styles.emptyEmoji}>📦</Text>
             <Text style={styles.emptyTitle}>
               {loading
-                ? 'Loading products...'
+                ? "Loading products..."
                 : search
-                  ? 'No products found'
-                  : 'No products yet'
-              }
+                  ? "No products found"
+                  : "No products yet"}
             </Text>
             {!search && !loading && (
               <TouchableOpacity
                 style={styles.emptyBtn}
-                onPress={() =>
-                  navigation.navigate('AddProduct')
-                }>
-                <Text style={styles.emptyBtnText}>
-                  Add First Product
-                </Text>
+                onPress={() => navigation.navigate("AddProduct")}
+              >
+                <Text style={styles.emptyBtnText}>Add First Product</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -302,66 +281,66 @@ export default function ProductsScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 10,
     padding: 12,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: "#f3f4f6",
   },
   searchInput: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
     borderRadius: 10,
     padding: 10,
     fontSize: 14,
-    color: '#111827',
+    color: "#111827",
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: "#e5e7eb",
   },
   addBtn: {
     backgroundColor: PURPLE,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   addBtnText: {
-    color: 'white',
-    fontWeight: '700',
+    color: "white",
+    fontWeight: "700",
     fontSize: 14,
   },
   filterRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 10,
     gap: 6,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: "#f3f4f6",
   },
   filterBtn: {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: "#f3f4f6",
   },
   filterBtnActive: {
     backgroundColor: PURPLE,
   },
   filterText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
+    fontWeight: "600",
+    color: "#6b7280",
   },
   filterTextActive: {
-    color: 'white',
+    color: "white",
   },
   count: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: "#9ca3af",
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
@@ -370,35 +349,35 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   productCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 14,
     marginBottom: 10,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
   productContent: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 14,
     gap: 12,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   imageBox: {
     width: 64,
     height: 64,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: "#f3f4f6",
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   productImage: {
     width: 64,
     height: 64,
-    resizeMode: 'cover',
+    resizeMode: "cover",
   },
   productEmoji: {
     fontSize: 28,
@@ -407,83 +386,83 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productName: {
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
     fontSize: 14,
     marginBottom: 4,
   },
   priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
     marginBottom: 4,
   },
   productPrice: {
-    fontWeight: '800',
+    fontWeight: "800",
     color: PURPLE,
     fontSize: 15,
   },
   comparePrice: {
     fontSize: 12,
-    color: '#d1d5db',
-    textDecorationLine: 'line-through',
+    color: "#d1d5db",
+    textDecorationLine: "line-through",
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   metaText: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: "#9ca3af",
   },
   metaDot: {
-    color: '#d1d5db',
+    color: "#d1d5db",
   },
   stockWarn: {
     marginTop: 4,
-    backgroundColor: '#fef3c7',
+    backgroundColor: "#fef3c7",
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   stockWarnText: {
     fontSize: 11,
-    color: '#92400e',
-    fontWeight: '600',
+    color: "#92400e",
+    fontWeight: "600",
   },
   productActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderTopWidth: 1,
-    borderTopColor: '#f9fafb',
+    borderTopColor: "#f9fafb",
   },
   editBtn: {
     flex: 1,
     padding: 10,
-    alignItems: 'center',
+    alignItems: "center",
     borderRightWidth: 1,
-    borderRightColor: '#f9fafb',
-    backgroundColor: '#f0f9ff',
+    borderRightColor: "#f9fafb",
+    backgroundColor: "#f0f9ff",
   },
   editBtnText: {
-    color: '#0369a1',
-    fontWeight: '600',
+    color: "#0369a1",
+    fontWeight: "600",
     fontSize: 13,
   },
   deleteBtn: {
     flex: 1,
     padding: 10,
-    alignItems: 'center',
-    backgroundColor: '#fff5f5',
+    alignItems: "center",
+    backgroundColor: "#fff5f5",
   },
   deleteBtnText: {
-    color: '#dc2626',
-    fontWeight: '600',
+    color: "#dc2626",
+    fontWeight: "600",
     fontSize: 13,
   },
   empty: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: 60,
   },
   emptyEmoji: {
@@ -492,8 +471,8 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#374151',
+    fontWeight: "700",
+    color: "#374151",
     marginBottom: 16,
   },
   emptyBtn: {
@@ -503,7 +482,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   emptyBtnText: {
-    color: 'white',
-    fontWeight: '700',
+    color: "white",
+    fontWeight: "700",
   },
 });
