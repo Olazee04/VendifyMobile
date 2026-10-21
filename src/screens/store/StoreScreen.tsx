@@ -122,7 +122,7 @@ export default function StoreScreen() {
   const viewStore = () => {
     if (store?.slug) {
       Linking.openURL(
-        `https://vendify-frontend.vercel.app/store/${store.slug}`,
+        `https://vendify-frontend-mocha.vercel.app/store/${store.slug}`,
       );
     }
   };
